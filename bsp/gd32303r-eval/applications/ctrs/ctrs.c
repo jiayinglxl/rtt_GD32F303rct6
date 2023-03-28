@@ -1,11 +1,6 @@
 
 #include "ctrs.h"
 
-#define THREAD_COUNT 2
-#define THREAD_STACK_SIZE 1024
-#define THREAD_PRIORITY RT_THREAD_PRIORITY_MAX / 3
-#define THREAD_TICK 10
-
 subscriber_t *sub_head = RT_NULL;
 
 rt_err_t topic_receive(topic_t topic, char **buffer, rt_uint16_t *length)
@@ -79,6 +74,20 @@ rt_int8_t topic_unsubscribe(topic_t topic)
 /* 订阅主题 */
 rt_int8_t topic_subscribe(topic_t topic)
 {
+	// 线程重复订阅主题
+	subscriber_t *tmp = sub_head;
+	rt_thread_t thread_id = rt_thread_self();
+
+	while(tmp)
+	{
+		if((thread_id == tmp->thread_id) && (tmp->topic == topic))
+		{
+			rt_kprintf("repeat subscribe topic %d\r\n",topic);
+			return RT_EOK;
+		}
+		tmp = tmp->next;
+	}
+	
 	subscriber_t *sub = (subscriber_t *)rt_malloc(sizeof(subscriber_t));
 
 	char topic_name[16];
@@ -87,7 +96,7 @@ rt_int8_t topic_subscribe(topic_t topic)
 	sub->topic = topic;
 	sub->mutex = rt_mutex_create(topic_name, RT_IPC_FLAG_FIFO);
 	sub->mq = rt_mq_create(topic_name, sizeof(message_t), 16, RT_IPC_FLAG_FIFO);
-	sub->thread_id = rt_thread_self();
+	sub->thread_id = thread_id;
 	sub->next = RT_NULL;
 
 	sub->next = sub_head;
