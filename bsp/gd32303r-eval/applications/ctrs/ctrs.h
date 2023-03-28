@@ -30,4 +30,9 @@ typedef struct message
 	rt_uint16_t lenght;
 }message_t;
 
+rt_err_t topic_receive(topic_t topic, char **buffer, rt_uint16_t *length);
+rt_int8_t topic_unsubscribe(topic_t topic);
+rt_int8_t topic_subscribe(topic_t topic);
+rt_int8_t topic_publish(topic_t topic, void *buffer, rt_uint16_t length);
+
 #endif //__CTRS_H__
